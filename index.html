@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PortalMatch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tg: {
+                            bg: 'var(--tg-theme-bg-color, #ffffff)',
+                            secBg: 'var(--tg-theme-secondary-bg-color, #f3f4f6)',
+                            text: 'var(--tg-theme-text-color, #1f2937)',
+                            hint: 'var(--tg-theme-hint-color, #6b7280)',
+                            btn: 'var(--tg-theme-button-color, #2563eb)',
+                            btnText: 'var(--tg-theme-button-text-color, #ffffff)',
+                            header: 'var(--tg-theme-header-bg-color, #ffffff)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        input, select, button { pointer-events: auto !important; }
+        #chat-messages::-webkit-scrollbar, #view-mutual-list::-webkit-scrollbar, #view-idle::-webkit-scrollbar { width: 4px; }
+        #chat-messages::-webkit-scrollbar-track, #view-mutual-list::-webkit-scrollbar-track, #view-idle::-webkit-scrollbar-track { background: transparent; }
+        #chat-messages::-webkit-scrollbar-thumb, #view-mutual-list::-webkit-scrollbar-thumb, #view-idle::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .sticker-scroll::-webkit-scrollbar { height: 4px; }
+        .sticker-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .bg-pattern { background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); }
+        html, body { overscroll-behavior-y: none; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-tg-secBg w-full flex flex-col bg-pattern text-tg-text">
+
+    <div id="privacy-overlay" class="absolute inset-0 bg-tg-bg z-[9999] flex flex-col items-center justify-center hidden">
+        <i class="fas fa-eye-slash text-6xl text-tg-hint mb-4"></i>
+        <h2 class="text-tg-text text-xl font-bold">Privacy Mode Active</h2>
+        <p class="text-tg-hint text-sm mt-2 text-center px-6">Screen is hidden to prevent recording.</p>
+    </div>
+
+    <div id="loading-screen" class="absolute inset-0 bg-tg-bg flex flex-col items-center justify-center z-50">
+        <i class="fas fa-shield-alt text-6xl text-tg-btn mb-4 animate-pulse"></i>
+        <h1 class="text-2xl font-bold text-tg-text mb-2">PortalMatch</h1>
+        <p class="text-tg-hint flex items-center gap-2" id="loading-text">Connecting to server...</p>
+    </div>
+
+    <div id="app-container" class="w-full h-full bg-tg-bg flex flex-col hidden relative min-h-0">
+        
+        <div class="bg-tg-header text-tg-text px-3 pb-3 pt-[70px] shadow-md z-10 flex justify-between items-center border-b border-tg-hint/20 shrink-0">
+            <div class="flex items-center gap-3">
+                <button id="btn-back-header" class="hidden text-tg-btn px-2 hover:opacity-70 transition-opacity">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <div id="header-icon" class="bg-tg-secBg p-2 rounded-full w-10 h-10 flex items-center justify-center text-tg-btn">
+                    <i class="fas fa-user-secret text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight" id="header-title">PortalMatch</h1>
+                    <p class="text-tg-hint text-[11px]" id="header-subtitle">dApp on Portaldot Local Node</p>
+                </div>
+            </div>
+            
+            <div id="chat-header-actions" class="hidden flex gap-2">
+                <button id="btn-report" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-sm" title="Report">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </button>
+                <button id="btn-stop-header" class="hidden bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-sm" title="Delete Mutual">
+                    <i class="fas fa-trash-alt mr-1"></i> <span>Delete</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="view-banned" class="flex-1 flex flex-col items-center justify-center p-6 text-center hidden bg-tg-secBg min-h-0">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                <i class="fas fa-ban text-4xl text-red-600"></i>
+            </div>
+            <h2 class="text-xl font-bold text-tg-text mb-2">ACCESS DENIED</h2>
+            <p class="text-red-600 mb-4 text-sm font-medium">Your account has been permanently banned.</p>
+            <p class="text-tg-hint text-xs"><span>ID: </span><span id="banned-uid" class="font-mono bg-tg-bg px-1 rounded"></span></p>
+        </div>
+
+        <div id="view-idle" class="flex-1 flex flex-col items-center py-4 px-6 text-center overflow-y-auto min-h-0 relative z-10">
+            <div class="bg-tg-secBg border border-tg-hint/20 rounded-2xl p-4 mb-4 text-center shadow-sm w-full max-w-xs relative shrink-0">
+                <h2 class="text-lg font-bold text-tg-text mb-1 mt-2">💬 PortalMatch Web3</h2>
+                <p class="text-tg-hint text-[11px] leading-relaxed">1-on-1 chat on Portaldot Appchain. Pay Gas, find matches, become mutuals!</p>
+            </div>
+
+            <h2 class="text-xl font-bold text-tg-text mb-1 mt-2 shrink-0">Your Profile</h2>
+            <p class="text-tg-hint mb-4 text-xs px-4 shrink-0">This information will be seen by your chat partner.</p>
+            
+            <div id="form-error" class="text-red-600 text-[13px] hidden mb-3 font-semibold bg-red-100 px-3 py-2 rounded-lg border border-red-200 shrink-0 w-full max-w-xs"></div>
+
+            <div class="w-full max-w-xs text-left mb-3 shrink-0">
+                <label class="block text-[13px] font-semibold text-tg-text mb-1 ml-1">Web3 Identity (Telegram)</label>
+                <div class="w-full bg-tg-btn/10 border border-tg-btn/30 backdrop-blur-sm rounded-xl px-4 py-3 text-sm text-tg-btn font-bold flex justify-between items-center">
+                    <span id="display-username">@loading...</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <input type="hidden" id="input-name" value="">
+            </div>
+
+            <div class="w-full max-w-xs text-left mb-3 shrink-0">
+                <label class="block text-[13px] font-semibold text-tg-text mb-1 ml-1">Portaldot Wallet (Local Node)</label>
+                <div class="w-full bg-tg-secBg border border-tg-hint/30 rounded-xl px-4 py-3 text-sm text-tg-text shadow-inner">
+                    <p class="text-[10px] text-tg-hint font-mono break-all mb-1.5" id="wallet-address">Loading Web3 Wallet...</p>
+                    <div class="flex justify-between items-center bg-tg-bg px-2 py-1.5 rounded-lg border border-tg-hint/20">
+                        <span class="font-semibold text-[12px]">POT Balance:</span>
+                        <span class="font-bold text-tg-btn text-[13px]" id="wallet-balance">0.0000</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-xs text-left mb-3 shrink-0 flex gap-2">
+                <div class="flex-1">
+                    <label class="block text-[13px] font-semibold text-tg-text mb-1 ml-1">Age</label>
+                    <select id="input-age" class="w-full bg-tg-bg border border-tg-hint/30 rounded-xl px-4 py-3 focus:ring-2 focus:ring-tg-btn outline-none text-sm text-tg-text cursor-pointer appearance-none"></select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-[13px] font-semibold text-tg-text mb-1 ml-1">Gender</label>
+                    <select id="select-gender" class="w-full bg-tg-bg border border-tg-hint/30 rounded-xl px-4 py-3 focus:ring-2 focus:ring-tg-btn outline-none text-sm text-tg-text cursor-pointer appearance-none">
+                        <option value="" disabled selected>Select...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="w-full max-w-xs text-left mb-6 shrink-0">
+                <label class="block text-[13px] font-semibold text-tg-text mb-1 ml-1">Looking For</label>
+                <select id="select-pref" class="w-full bg-tg-bg border border-tg-hint/30 rounded-xl px-4 py-3 focus:ring-2 focus:ring-tg-btn outline-none text-sm text-tg-text cursor-pointer appearance-none">
+                    <option value="Random" selected>Random (Anyone)</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+
+            <button id="btn-search" class="w-full max-w-xs bg-tg-btn text-tg-btnText font-bold py-3.5 rounded-2xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 text-[15px] shrink-0 mb-3">
+                <i class="fas fa-random"></i> <span>Search Now (Gas: POT)</span>
+            </button>
+
+            <button id="btn-add-home" class="hidden w-full max-w-xs bg-tg-bg border border-tg-hint/30 text-tg-text font-bold py-3 rounded-2xl shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 text-[14px] shrink-0 mb-6">
+                <i class="fas fa-home text-tg-btn"></i> <span>Add to Home Screen</span>
+            </button>
+        </div>
+
+        <div id="view-mutual-list" class="flex-1 flex flex-col hidden bg-tg-secBg min-h-0 overflow-y-auto p-4">
+            <h2 class="text-xl font-bold text-tg-text mb-4 px-2">My Mutuals</h2>
+            <div id="mutual-rooms-container" class="flex flex-col gap-2 pb-4"></div>
+        </div>
+
+        <div id="view-searching" class="flex-1 flex flex-col items-center justify-center p-6 text-center hidden bg-tg-secBg min-h-0">
+            <div class="relative w-24 h-24 mb-6">
+                <div class="absolute inset-0 border-4 border-tg-hint/30 rounded-full animate-ping"></div>
+                <div class="absolute inset-0 border-4 border-tg-btn rounded-full border-t-transparent animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <i class="fas fa-link text-2xl text-tg-btn"></i>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-tg-text mb-2">Finding Match...</h2>
+            <p id="queue-status" class="text-[11px] font-semibold text-tg-btn mb-6 bg-tg-btn/10 px-3 py-1 rounded-full border border-tg-btn/20">Analyzing network queue...</p>
+            <button id="btn-cancel-search" class="text-red-500 font-semibold px-6 py-2 bg-red-500/10 rounded-full border border-red-500/20">Cancel</button>
+        </div>
+
+        <div id="view-chatting" class="flex-1 flex flex-col hidden bg-tg-secBg min-h-0 relative">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-3 flex flex-col gap-2 pb-4 min-h-0 scroll-smooth"></div>
+
+            <div id="system-notice" class="hidden bg-tg-bg text-tg-text text-center py-2 text-[13px] font-medium border-y border-tg-hint/20 shrink-0"></div>
+
+            <div class="bg-tg-bg border-t border-tg-hint/20 shrink-0 flex flex-col pb-[40px] relative" id="chat-input-area">
+                
+                <div id="sticker-picker" class="hidden absolute bottom-full left-0 w-full bg-tg-secBg border-t border-tg-hint/20 p-3 flex gap-4 overflow-x-auto z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] sticker-scroll"></div>
+
+                <div id="gif-picker" class="hidden absolute bottom-full left-0 w-full bg-tg-secBg border-t border-tg-hint/20 p-3 flex flex-col gap-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                    <input type="text" id="gif-search" placeholder="Search GIF (e.g. cat, haha)..." class="w-full border border-tg-hint/30 bg-tg-bg text-tg-text rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-tg-btn">
+                    <div id="gif-results" class="flex gap-2 overflow-x-auto sticker-scroll pb-1 h-20 items-center">
+                        <span class="text-tg-hint text-xs italic">Type to search animations...</span>
+                    </div>
+                </div>
+
+                <form id="chat-form" class="flex gap-2 items-center p-2 pb-1.5">
+                    <button type="button" id="btn-sticker" class="text-tg-hint hover:text-tg-btn transition-colors px-1.5 shrink-0" title="Send Sticker">
+                        <i class="fas fa-smile text-xl"></i>
+                    </button>
+                    <button type="button" id="btn-gif" class="text-tg-hint hover:text-tg-btn font-black transition-colors px-1 shrink-0 text-xs tracking-wider" title="Search GIF">
+                        GIF
+                    </button>
+                    <input type="text" id="message-input" autocomplete="off" placeholder="Type a message..." 
+                        class="flex-1 border border-tg-hint/30 bg-tg-secBg text-tg-text rounded-full px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-tg-btn transition-all text-sm w-full" required>
+                    <button type="submit" id="btn-send" class="bg-tg-btn text-tg-btnText rounded-full w-10 h-10 flex items-center justify-center transition-transform active:scale-95 shadow-md shrink-0">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+
+                <div id="chat-actions-bar" class="flex gap-2 px-2 pt-0.5">
+                    <button type="button" id="btn-stop-bottom" class="flex-1 bg-red-500/10 text-red-500 border border-red-500/20 py-2 rounded-xl font-bold text-[13px] flex items-center justify-center gap-1.5 transition-colors active:bg-red-500/20">
+                        <i class="fas fa-times-circle text-base"></i> <span>Stop</span>
+                    </button>
+                    <button type="button" id="btn-mutual" class="flex-1 bg-pink-500/10 text-pink-500 border border-pink-500/20 py-2 rounded-xl font-bold text-[13px] flex items-center justify-center gap-1.5 transition-colors active:bg-pink-500/20">
+                        <i class="fas fa-heart text-base"></i> <span>Mutual</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-3 bg-tg-bg border-t border-tg-hint/20 hidden flex gap-3 shrink-0" id="post-chat-actions">
+                <button id="btn-search-again" class="w-full bg-tg-btn hover:opacity-90 text-tg-btnText rounded-full py-3 font-bold text-sm transition-opacity shadow-lg">
+                    <i class="fas fa-random mr-1"></i> Find New Partner
+                </button>
+            </div>
+        </div>
+
+        <div id="bottom-nav" class="bg-tg-bg border-t border-tg-hint/20 flex shrink-0 pb-[50px]">
+            <button id="nav-search" class="flex-1 py-2.5 text-tg-btn flex flex-col items-center text-[10px] font-bold transition-colors">
+                <i class="fas fa-search text-lg mb-0.5"></i> <span>Search</span>
+            </button>
+            <button id="nav-mutual" class="flex-1 py-2.5 text-tg-hint flex flex-col items-center text-[10px] font-bold transition-colors relative">
+                <i class="fas fa-user-friends text-lg mb-0.5"></i> <span>Mutual</span>
+                <span id="mutual-badge" class="hidden absolute top-1 right-1/4 bg-pink-500 text-white rounded-full px-1.5 text-[9px] font-black border border-tg-bg shadow-sm">0</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, getDoc, deleteDoc, updateDoc, arrayUnion, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Static Web3 Imports for Stability
+        import { ApiPromise, WsProvider } from "https://esm.sh/@polkadot/api";
+        import { Keyring } from "https://esm.sh/@polkadot/keyring";
+        import { mnemonicGenerate } from "https://esm.sh/@polkadot/util-crypto";
+
+        const tg = window.Telegram.WebApp;
+        tg.expand(); 
+        if (tg.isVersionAtLeast && tg.isVersionAtLeast('8.0') && tg.requestFullscreen) {
+            try { tg.requestFullscreen(); } catch (e) {}
+        }
+        tg.ready();
+        tg.setHeaderColor('bg_color');
+        tg.setBackgroundColor('bg_color');
+        
+        const tgUser = tg.initDataUnsafe?.user || { id: "UNKNOWN", first_name: "Anonymous", username: "anon" };
+
+        let portaldotApi = null;
+        let isPortaldotConnected = false;
+        let myWallet = null;
+
+        async function initPortaldot() {
+            try {
+                const wsProvider = new WsProvider('ws://127.0.0.1:9944');
+                portaldotApi = await ApiPromise.create({ provider: wsProvider });
+                isPortaldotConnected = true;
+                console.log("🚀 Connected to Portaldot Local Node!");
+
+                const keyring = new Keyring({ type: 'sr25519', ss58Format: 42 });
+
+                let savedSeed = localStorage.getItem('portaldot_seed');
+                if (!savedSeed) {
+                    savedSeed = mnemonicGenerate();
+                    localStorage.setItem('portaldot_seed', savedSeed);
+                }
+
+                myWallet = keyring.addFromUri(savedSeed);
+                document.getElementById('wallet-address').innerText = myWallet.address;
+
+                fetchBalance();
+
+            } catch (error) {
+                console.error("Web3 Init Failed:", error);
+                document.getElementById('wallet-address').innerText = "Failed to load Web3 (Check Node Connection).";
+            }
+        }
+
+        async function fetchBalance() {
+            if (!portaldotApi || !myWallet) return;
+            try {
+                const { data: balance } = await portaldotApi.query.system.account(myWallet.address);
+                const potBalance = balance.free.toBn() / (10 ** 14); 
+                document.getElementById('wallet-balance').innerText = `${potBalance.toFixed(4)} POT`;
+            } catch (e) {
+                console.log("Error fetching balance", e);
+            }
+        }
+
+        initPortaldot();
+
+        const els = {
+            loading: document.getElementById('loading-screen'), app: document.getElementById('app-container'), viewBanned: document.getElementById('view-banned'),
+            viewIdle: document.getElementById('view-idle'), viewMutualList: document.getElementById('view-mutual-list'), viewSearching: document.getElementById('view-searching'),
+            viewChatting: document.getElementById('view-chatting'), btnSearch: document.getElementById('btn-search'), btnCancel: document.getElementById('btn-cancel-search'),
+            btnReport: document.getElementById('btn-report'), btnSend: document.getElementById('btn-send'), chatMessages: document.getElementById('chat-messages'),
+            chatForm: document.getElementById('chat-form'), msgInput: document.getElementById('message-input'), headerTitle: document.getElementById('header-title'),
+            headerSubtitle: document.getElementById('header-subtitle'), systemNotice: document.getElementById('system-notice'), bannedUid: document.getElementById('banned-uid'),
+            inputName: document.getElementById('input-name'), inputAge: document.getElementById('input-age'), selectGender: document.getElementById('select-gender'), 
+            selectPref: document.getElementById('select-pref'), formError: document.getElementById('form-error'), 
+            chatHeaderActions: document.getElementById('chat-header-actions'), chatInputArea: document.getElementById('chat-input-area'), postChatActions: document.getElementById('post-chat-actions'), 
+            btnSearchAgain: document.getElementById('btn-search-again'),
+            queueStatus: document.getElementById('queue-status'), btnStopBottom: document.getElementById('btn-stop-bottom'), btnMutual: document.getElementById('btn-mutual'), 
+            btnStopHeader: document.getElementById('btn-stop-header'), btnBackHeader: document.getElementById('btn-back-header'), headerIcon: document.getElementById('header-icon'),
+            bottomNav: document.getElementById('bottom-nav'), navSearch: document.getElementById('nav-search'), navMutual: document.getElementById('nav-mutual'),
+            mutualRoomsContainer: document.getElementById('mutual-rooms-container'), mutualBadge: document.getElementById('mutual-badge'), chatActionsBar: document.getElementById('chat-actions-bar'),
+            loadingText: document.getElementById('loading-text'), btnAddHome: document.getElementById('btn-add-home'),
+            btnSticker: document.getElementById('btn-sticker'), stickerPicker: document.getElementById('sticker-picker'),
+            btnGif: document.getElementById('btn-gif'), gifPicker: document.getElementById('gif-picker'), gifSearch: document.getElementById('gif-search'), gifResults: document.getElementById('gif-results')
+        };
+
+        const stikerList = [
+            "https://fonts.gstatic.com/s/e/notoemoji/latest/1f600/512.webp", "https://fonts.gstatic.com/s/e/notoemoji/latest/1f602/512.webp",
+            "https://fonts.gstatic.com/s/e/notoemoji/latest/1f923/512.webp", "https://fonts.gstatic.com/s/e/notoemoji/latest/1f60d/512.webp",
+            "https://fonts.gstatic.com/s/e/notoemoji/latest/1f618/512.webp", "https://fonts.gstatic.com/s/e/notoemoji/latest/1f970/512.webp",
+            "https://fonts.gstatic.com/s/e/notoemoji/latest/1f97a/512.webp", "https://fonts.gstatic.com/s/e/notoemoji/latest/1f62d/512.webp",
+            "https://fonts.gstatic.com/s/e/notoemoji/latest/1f621/512.webp", "https://fonts.gstatic.com/s/e/notoemoji/latest/1f44d/512.webp",
+            "https://fonts.gstatic.com/s/e/notoemoji/latest/1f44e/512.webp", "https://fonts.gstatic.com/s/e/notoemoji/latest/1f64f/512.webp",
+            "https://fonts.gstatic.com/s/e/notoemoji/latest/1f496/512.webp", "https://fonts.gstatic.com/s/e/notoemoji/latest/1f389/512.webp"
+        ];
+        
+        let stikerHTML = '';
+        stikerList.forEach(url => {
+            stikerHTML += `<img src="${url}" class="w-14 h-14 flex-shrink-0 cursor-pointer hover:scale-110 transition-transform active:scale-95 drop-shadow-sm" onclick="sendSticker('${url}')">`;
+        });
+        els.stickerPicker.innerHTML = stikerHTML;
+
+        els.btnSticker.addEventListener('click', () => { 
+            els.stickerPicker.classList.toggle('hidden'); 
+            els.gifPicker.classList.add('hidden'); 
+        });
+        
+        els.btnGif.addEventListener('click', () => { 
+            els.gifPicker.classList.toggle('hidden'); 
+            els.stickerPicker.classList.add('hidden'); 
+            if (!els.gifPicker.classList.contains('hidden')) els.gifSearch.focus();
+        });
+
+        let gifTimeout = null;
+        els.gifSearch.addEventListener('input', (e) => {
+            clearTimeout(gifTimeout);
+            const rawQuery = e.target.value.trim();
+            if (rawQuery.length < 2) {
+                els.gifResults.innerHTML = `<span class="text-tg-hint text-xs italic">Type to search animations...</span>`;
+                return;
+            }
+            
+            els.gifResults.innerHTML = `<i class="fas fa-circle-notch fa-spin text-tg-btn"></i><span class="text-xs text-tg-hint ml-2">Searching...</span>`;
+            
+            const optimizedQuery = encodeURIComponent(rawQuery);
+            
+            gifTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`https://api.giphy.com/v1/stickers/search?api_key=GlVGYHqcVGWPNWkvNC2miZSy10hqVuBn&q=${optimizedQuery}&limit=15&rating=g&lang=en`);
+                    
+                    if (!response.ok) {
+                        els.gifResults.innerHTML = `<span class="text-red-500 text-[11px] font-bold">Giphy System Error (${response.status})</span>`;
+                        return;
+                    }
+
+                    const json = await response.json();
+                    
+                    if (json.data && json.data.length > 0) {
+                        let resHTML = '';
+                        json.data.forEach(gif => {
+                            const url = gif.images.fixed_height_small.url;
+                            const sendUrl = gif.images.downsized.url; 
+                            resHTML += `<img src="${url}" class="h-16 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform active:scale-95 drop-shadow-md rounded bg-tg-bg/50" onclick="sendOnlineGif('${sendUrl}')">`;
+                        });
+                        els.gifResults.innerHTML = resHTML;
+                    } else {
+                        els.gifResults.innerHTML = `<span class="text-tg-hint text-xs italic">No results found. Try another word.</span>`;
+                    }
+                } catch (err) {
+                    els.gifResults.innerHTML = `<span class="text-red-500 text-xs">Failed to load. Check connection.</span>`;
+                }
+            }, 800);
+        });
+
+        window.sendOnlineGif = async function(url) {
+            if(!currentRoomId || !currentUser) return;
+            els.gifPicker.classList.add('hidden');
+            els.gifSearch.value = '';
+            els.gifResults.innerHTML = `<span class="text-tg-hint text-xs italic">Type to search animations...</span>`;
+            
+            try {
+                await addDoc(messagesRef, { roomId: currentRoomId, senderId: currentUser.uid, type: 'gif_url', text: url, timestamp: Date.now() });
+                if (isMutualRoom && partnerUid) {
+                    try {
+                        const roomSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId));
+                        if (roomSnap.exists()) {
+                            let unread = roomSnap.data().unreadCount || {};
+                            unread[partnerUid] = (unread[partnerUid] || 0) + 1;
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { unreadCount: unread, lastUpdated: Date.now() });
+                        }
+                    } catch(e) {}
+                }
+                scrollToBottom();
+            } catch(e) {}
+        };
+
+        window.sendSticker = async function(url) {
+            if(!currentRoomId || !currentUser) return;
+            els.stickerPicker.classList.add('hidden');
+            try {
+                await addDoc(messagesRef, { roomId: currentRoomId, senderId: currentUser.uid, type: 'sticker', text: url, timestamp: Date.now() });
+                if (isMutualRoom && partnerUid) {
+                    try {
+                        const roomSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId));
+                        if (roomSnap.exists()) {
+                            let unread = roomSnap.data().unreadCount || {};
+                            unread[partnerUid] = (unread[partnerUid] || 0) + 1;
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { unreadCount: unread, lastUpdated: Date.now() });
+                        }
+                    } catch(e) {}
+                }
+                scrollToBottom();
+            } catch(e) {}
+        };
+
+        if (typeof tg.addToHomeScreen === 'function') {
+            els.btnAddHome.classList.remove('hidden');
+            els.btnAddHome.addEventListener('click', () => {
+                tg.addToHomeScreen();
+            });
+        }
+
+        let optHtml = `<option value="" disabled selected>Select...</option>`;
+        for (let i = 13; i <= 99; i++) optHtml += `<option value="${i}">${i} Yrs</option>`;
+        els.inputAge.innerHTML = optHtml;
+
+        const TELEGRAM_BOT_TOKEN = "8538235292:AAE4wtQejrGiCQaVCXyGbWASAO6PJQBvfVE"; 
+        const ADMIN_CHAT_ID = "301942436"; 
+        const firebaseConfig = { apiKey: "AIzaSyDZV-5Yz0etyefV9RibBgoPU_EcPed0GEI", authDomain: "anonchatprivacy.firebaseapp.com", projectId: "anonchatprivacy", storageBucket: "anonchatprivacy.firebasestorage.app", messagingSenderId: "959380064361", appId: "1:959380064361:web:5f82856c7d47920c12baf8" };
+        const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const appId = "anonchatprivacy";
+
+        let currentUser = null; let currentState = 'idle'; let currentRoomId = null; let partnerUid = null;
+        let hasReportedThisSession = false; let isMutualRoom = false;
+        
+        let globalRoomsUnsub = null; 
+        let unsubRooms = null; 
+        let unsubQueue = null; let unsubMessages = null;
+        let myQueueDocId = null; let searchStartTime = null; let pingInterval = null; 
+        
+        let allMyRoomsList = []; 
+
+        const queueRef = collection(db, 'artifacts', appId, 'public', 'data', 'tg_match_queue');
+        const roomsRef = collection(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms');
+        const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'tg_match_messages');
+
+        const initAuth = async () => {
+            try { 
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth); 
+            } catch (error) { 
+                els.loadingText.innerHTML = `<span class="text-red-500">Database Connection Failed: ${error.message}</span>`; 
+                setTimeout(() => {
+                    els.loading.classList.add('hidden');
+                    els.app.classList.remove('hidden');
+                }, 3000);
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                try {
+                    const banSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned_users', user.uid));
+                    if (banSnap.exists()) { switchView('banned'); els.loading.classList.add('hidden'); els.app.classList.remove('hidden'); return; }
+                } catch(e) {}
+                
+                initGlobalRoomsListener();
+                els.loading.classList.add('hidden'); els.app.classList.remove('hidden');
+                
+                const finalUsername = tgUser.username ? `@${tgUser.username}` : `UID_${tgUser.id}`;
+                document.getElementById('display-username').innerText = finalUsername;
+                els.inputName.value = finalUsername;
+                
+                switchView('idle');
+            }
+        });
+
+        async function clearUnreadCount(roomId) {
+            if (!roomId || !isMutualRoom || !currentUser) return;
+            try {
+                const localRoom = allMyRoomsList.find(r => r.id === roomId);
+                if (localRoom && localRoom.unreadCount && localRoom.unreadCount[currentUser.uid] > 0) {
+                    localRoom.unreadCount[currentUser.uid] = 0; 
+                    let unread = { ...localRoom.unreadCount };
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', roomId), { unreadCount: unread });
+                }
+            } catch(e) {}
+        }
+
+        function initGlobalRoomsListener() {
+            if (globalRoomsUnsub) return;
+            globalRoomsUnsub = onSnapshot(roomsRef, (snapshot) => {
+                let allRooms = [];
+                snapshot.forEach(doc => allRooms.push({ id: doc.id, ...doc.data() }));
+
+                allMyRoomsList = allRooms.filter(r => r.users && r.users.includes(currentUser.uid));
+                let mutualRooms = allMyRoomsList.filter(r => r.status === 'mutual' || (r.status === 'active' && r.mutualVotes && r.mutualVotes.length === 2));
+                renderMutualList(mutualRooms);
+                
+                if (currentState === 'chatting' && currentRoomId && isMutualRoom) {
+                     const currentRoom = allRooms.find(r => r.id === currentRoomId);
+                     if (!currentRoom || currentRoom.status === 'closed') {
+                         autoReportSession(); handlePartnerLeft("Partner left the mutual chat.");
+                     }
+                }
+            });
+        }
+
+        function renderMutualList(rooms) {
+            els.mutualRoomsContainer.innerHTML = '';
+            
+            rooms.sort((a, b) => (b.lastUpdated || b.timestamp) - (a.lastUpdated || a.timestamp));
+
+            let totalUnread = 0;
+
+            if (rooms.length === 0) {
+                els.mutualRoomsContainer.innerHTML = `<div class="text-center mt-10"><i class="fas fa-heart-broken text-4xl text-tg-hint/30 mb-2"></i><p class="text-tg-hint text-sm">No mutuals yet.</p></div>`;
+                els.mutualBadge.classList.add('hidden');
+                return;
+            }
+
+            rooms.forEach(r => {
+                const pUid = r.users.find(u => u !== currentUser.uid);
+                const pName = (r.names && r.names[pUid]) ? r.names[pUid] : 'Anonymous';
+                const pGender = r.users[0] === pUid ? r.tgInfo1.split('|')[1].trim() : r.tgInfo2.split('|')[1].trim();
+
+                const unreadCount = (r.unreadCount && r.unreadCount[currentUser.uid]) ? r.unreadCount[currentUser.uid] : 0;
+                totalUnread += unreadCount;
+
+                const badgeHtml = unreadCount > 0 
+                    ? `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md animate-bounce inline-block ml-1">${unreadCount}</span>` 
+                    : '';
+
+                const div = document.createElement('div');
+                div.className = "bg-tg-bg border border-tg-hint/20 rounded-2xl p-3 flex justify-between items-center shadow-sm cursor-pointer hover:bg-tg-secBg transition-colors no-select mb-2";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 bg-gradient-to-tr from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white font-black text-lg shadow-inner">${pName.charAt(0).toUpperCase()}</div>
+                        <div>
+                            <div class="flex items-center">
+                                <h3 class="font-bold text-tg-text text-[15px]">${pName}</h3>
+                                ${badgeHtml}
+                            </div>
+                            <p class="text-tg-hint text-[11px]"><i class="fas fa-heart text-pink-500 mr-0.5"></i> ${pGender}</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-tg-hint"></i>
+                `;
+                div.onclick = () => { openExistingRoom(r); };
+                els.mutualRoomsContainer.appendChild(div);
+            });
+
+            if (totalUnread > 0) {
+                els.mutualBadge.innerText = totalUnread;
+                els.mutualBadge.classList.remove('hidden', 'bg-pink-500');
+                els.mutualBadge.classList.add('bg-red-500', 'animate-pulse');
+            } else {
+                els.mutualBadge.innerText = rooms.length;
+                els.mutualBadge.classList.remove('hidden', 'bg-red-500', 'animate-pulse');
+                els.mutualBadge.classList.add('bg-pink-500');
+            }
+        }
+
+        function switchView(state) {
+            currentState = state;
+            [els.viewBanned, els.viewIdle, els.viewSearching, els.viewChatting, els.viewMutualList, els.chatHeaderActions, els.systemNotice, els.postChatActions, els.btnBackHeader, els.btnStopHeader].forEach(el => el.classList.add('hidden'));
+            els.headerIcon.classList.remove('hidden'); els.chatInputArea.classList.remove('hidden'); els.bottomNav.classList.remove('hidden');
+            els.msgInput.disabled = false; els.btnSend.disabled = false;
+            els.navSearch.classList.replace('text-tg-btn', 'text-tg-hint'); els.navSearch.classList.replace('border-tg-btn', 'border-transparent');
+            els.navMutual.classList.replace('text-tg-btn', 'text-tg-hint'); els.navMutual.classList.replace('border-tg-btn', 'border-transparent');
+
+            tg.BackButton.hide();
+
+            if (state === 'banned') els.viewBanned.classList.remove('hidden');
+            else if (state === 'idle') {
+                els.viewIdle.classList.remove('hidden'); els.headerTitle.innerText = "PortalMatch"; els.headerSubtitle.innerText = "dApp on Portaldot";
+                els.navSearch.classList.replace('text-tg-hint', 'text-tg-btn'); els.navSearch.classList.replace('border-transparent', 'border-tg-btn');
+            } 
+            else if (state === 'mutual_list') {
+                els.viewMutualList.classList.remove('hidden'); els.headerTitle.innerText = "My Mutuals"; els.headerSubtitle.innerText = "Saved Chats";
+                els.navMutual.classList.replace('text-tg-hint', 'text-tg-btn'); els.navMutual.classList.replace('border-transparent', 'border-tg-btn');
+            }
+            else if (state === 'searching') {
+                els.viewSearching.classList.remove('hidden'); els.bottomNav.classList.add('hidden');
+                els.headerTitle.innerText = "Finding Match..."; els.headerSubtitle.innerText = "Please wait a moment.";
+            } 
+            else if (state === 'chatting') {
+                els.viewChatting.classList.remove('hidden'); els.bottomNav.classList.add('hidden'); els.headerIcon.classList.add('hidden');
+                tg.BackButton.show();
+                els.chatHeaderActions.classList.remove('hidden');
+                
+                els.btnMutual.classList.remove('hidden');
+                els.btnMutual.classList.replace('text-pink-300', 'text-pink-500');
+                els.btnMutual.classList.remove('pointer-events-none');
+                els.btnStopBottom.classList.remove('hidden');
+                if (isMutualRoom) els.btnStopHeader.classList.remove('hidden');
+            }
+        }
+
+        els.navSearch.addEventListener('click', () => { if(currentState !== 'searching' && currentState !== 'chatting') switchView('idle'); });
+        els.navMutual.addEventListener('click', () => { if(currentState !== 'searching' && currentState !== 'chatting') switchView('mutual_list'); });
+
+        async function startSearch() {
+            if (!currentUser || currentState === 'searching' || currentState === 'joining') return;
+            const myName = els.inputName.value.trim(); const myAge = els.inputAge.value; const myGender = els.selectGender.value; const myPref = els.selectPref.value;
+            
+            if (!myAge) { els.formError.innerText = "⚠️ Please select your age."; els.formError.classList.remove('hidden'); return; }
+            if (!myGender) { els.formError.innerText = "⚠️ Please select your gender."; els.formError.classList.remove('hidden'); return; }
+            
+            els.formError.classList.add('hidden'); 
+            
+            cleanUpListeners(); 
+            switchView('searching'); partnerUid = null; hasReportedThisSession = false; isMutualRoom = false; 
+            searchStartTime = Date.now(); 
+
+            try {
+                els.queueStatus.innerText = "Requesting gas fee transaction...";
+                
+                if (!isPortaldotConnected || !myWallet) {
+                    throw new Error("Portaldot Network is not ready. Make sure Local Node is running.");
+                }
+
+                const AMOUNT_TO_SEND = 0.05 * (10 ** 14); 
+                const TREASURY_ADDRESS = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY';
+                const transferTx = portaldotApi.tx.balances.transferKeepAlive(TREASURY_ADDRESS, AMOUNT_TO_SEND);
+                
+                await new Promise((resolve, reject) => {
+                    transferTx.signAndSend(myWallet, ({ status, dispatchError }) => {
+                        if (status.isInBlock) {
+                            els.queueStatus.innerText = "Gas paid! Analyzing network queue...";
+                            fetchBalance(); 
+                            resolve(); 
+                        } else if (dispatchError) {
+                            if (dispatchError.isModule) {
+                                const decoded = portaldotApi.registry.findMetaError(dispatchError.asModule);
+                                reject(new Error(`${decoded.section}.${decoded.name}`));
+                            } else {
+                                reject(new Error(dispatchError.toString()));
+                            }
+                        }
+                    }).catch((e) => reject(new Error("Transaction cancelled.")));
+                });
+
+                const qDoc = await addDoc(queueRef, { 
+                    uid: currentUser.uid, name: myName, tgInfo: `${tgUser.first_name} (@${tgUser.username}) [ID:${tgUser.id}]`,
+                    gender: myGender, pref: myPref, age: myAge, timestamp: searchStartTime, lastPing: Date.now() 
+                });
+                myQueueDocId = qDoc.id;
+
+                pingInterval = setInterval(() => { if (myQueueDocId) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_queue', myQueueDocId), { lastPing: Date.now() }).catch(e=>{}); }, 5000);
+
+                unsubRooms = onSnapshot(roomsRef, (snapshot) => {
+                    if (currentState !== 'searching' && currentState !== 'chatting') return;
+
+                    let allRooms = [];
+                    snapshot.forEach(doc => allRooms.push({ id: doc.id, ...doc.data() }));
+
+                    if (currentState === 'searching') {
+                        const myRoom = allRooms.find(r => r.status === 'active' && r.users && r.users.includes(currentUser.uid) && r.timestamp >= searchStartTime);
+                        if (myRoom) {
+                            partnerUid = myRoom.users.find(u => u !== currentUser.uid);
+                            joinRoom(myRoom);
+                        }
+                    } else if (currentState === 'chatting' && currentRoomId && !isMutualRoom) {
+                        const currentRoom = allRooms.find(r => r.id === currentRoomId);
+                        if (!currentRoom || currentRoom.status === 'closed') {
+                            autoReportSession();
+                            handlePartnerLeft("Partner left the chat.");
+                        } else if (currentRoom.mutualVotes && currentRoom.mutualVotes.length === 2) {
+                            isMutualRoom = true;
+                            if (currentRoom.status === 'active') updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { status: 'mutual' }).catch(e=>{});
+                            setupMutualUI(true); scrollToBottom();
+                        }
+                    }
+                }, (error) => console.error("Room listener error", error));
+
+                unsubQueue = onSnapshot(queueRef, async (snapshot) => {
+                    if (currentState !== 'searching') return;
+                    let queueMembers = []; snapshot.forEach(doc => queueMembers.push({ id: doc.id, ...doc.data() }));
+                    els.queueStatus.innerText = `Searching partner... (Queue: ${queueMembers.length})`;
+                    
+                    let myQueueDoc = queueMembers.find(q => q.uid === currentUser.uid && q.timestamp === searchStartTime); if (!myQueueDoc) return; 
+
+                    let validPartners = queueMembers.filter(p => p.uid !== currentUser.uid && (Date.now() - (p.lastPing || p.timestamp)) <= 15000 && (myPref === 'Random' || myPref === p.gender) && (p.pref === 'Random' || p.pref === myGender));
+                    let olderValidPartners = validPartners.filter(p => p.timestamp < myQueueDoc.timestamp || (p.timestamp === myQueueDoc.timestamp && p.uid < currentUser.uid)).sort((a, b) => a.timestamp - b.timestamp);
+
+                    if (olderValidPartners.length > 0) {
+                        const partner = olderValidPartners[0]; currentState = 'joining';
+                        try {
+                            const roomData = {
+                                users: [currentUser.uid, partner.uid], 
+                                names: { [currentUser.uid]: myName, [partner.uid]: partner.name },
+                                tgInfo1: `${tgUser.first_name} (@${tgUser.username}) [ID:${tgUser.id}] | ${myGender} ${myAge}yrs`, tgInfo2: `${partner.tgInfo} | ${partner.gender} ${partner.age}yrs`,
+                                status: 'active', joined: [], mutualVotes: [], timestamp: Date.now()
+                            };
+                            
+                            const newRoom = await addDoc(roomsRef, roomData);
+                            const docToDel = myQueueDocId; myQueueDocId = null;
+                            if(docToDel) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_queue', docToDel)).catch(e=>{});
+                            deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_queue', partner.id)).catch(e=>{});
+                            
+                            partnerUid = partner.uid;
+                            joinRoom({ id: newRoom.id, ...roomData });
+                        } catch (err) { currentState = 'searching'; }
+                    }
+                }, (error) => { els.queueStatus.innerText = "Connection issue. Try again."; });
+            } catch (error) { 
+                console.error(error);
+                alert("Transaction Failed: " + error.message);
+                cancelSearch(); 
+            }
+        }
+
+        function cancelSearch() {
+            const docId = myQueueDocId; myQueueDocId = null;
+            cleanUpListeners();
+            switchView('idle');
+            if (docId) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_queue', docId)).catch(e=>{});
+        }
+
+        function joinRoom(roomObj) {
+            currentRoomId = roomObj.id; isMutualRoom = false;
+            switchView('chatting');
+            
+            if (unsubQueue) { unsubQueue(); unsubQueue = null; }
+            if (pingInterval) { clearInterval(pingInterval); pingInterval = null; } 
+            
+            const pName = (roomObj.names && roomObj.names[partnerUid]) ? roomObj.names[partnerUid] : 'Anonymous';
+            els.headerTitle.innerText = pName; els.headerSubtitle.innerHTML = `<span class="text-green-500 font-bold">● Online</span>`;
+            els.chatMessages.innerHTML = `<div class="flex justify-center my-3"><span class="bg-tg-bg border border-tg-hint/20 text-tg-text text-[11px] font-semibold px-4 py-2 rounded-xl shadow-sm text-center">Connected! Chat is securely protected.</span></div>`;
+            setupMutualUI(false);
+            
+            listenToMessages();
+            updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { joined: arrayUnion(currentUser.uid) }).catch(e=>{});
+
+            setTimeout(async () => {
+                if (currentRoomId === roomObj.id && !isMutualRoom) {
+                    try {
+                        const rSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId));
+                        if (rSnap.exists() && (!rSnap.data().joined || rSnap.data().joined.length < 2)) await stopChat(true); 
+                    } catch(e){}
+                }
+            }, 8000);
+        }
+
+        function openExistingRoom(roomObj) {
+            currentRoomId = roomObj.id; partnerUid = roomObj.users.find(u => u !== currentUser.uid); isMutualRoom = true;
+            
+            clearUnreadCount(currentRoomId);
+
+            switchView('chatting');
+            
+            const pName = (roomObj.names && roomObj.names[partnerUid]) ? roomObj.names[partnerUid] : 'Anonymous';
+            els.headerTitle.innerText = pName; els.headerSubtitle.innerHTML = `<span class="text-pink-500 font-bold"><i class="fas fa-heart"></i> Mutual Friend</span>`;
+            els.chatMessages.innerHTML = '';
+            setupMutualUI(true);
+            
+            listenToMessages();
+        }
+
+        function setupMutualUI(isMutual) {
+            if (isMutual) {
+                els.chatActionsBar.classList.add('hidden');
+                els.btnStopHeader.classList.remove('hidden');
+            } else {
+                els.chatActionsBar.classList.remove('hidden');
+                els.btnMutual.innerHTML = `<i class="fas fa-heart text-base"></i> <span>Mutual</span>`;
+                els.btnMutual.classList.remove('opacity-50', 'pointer-events-none');
+                els.btnMutual.classList.replace('text-pink-300', 'text-pink-500');
+                els.btnStopHeader.classList.add('hidden');
+            }
+        }
+
+        async function voteMutual() {
+            if (!currentRoomId || isMutualRoom) return;
+            els.btnMutual.classList.replace('text-pink-500', 'text-pink-300'); els.btnMutual.classList.add('pointer-events-none');
+            
+            try { 
+                const roomSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId));
+                if (roomSnap.exists()) {
+                    const votes = roomSnap.data().mutualVotes || [];
+                    if (votes.length === 1 && !votes.includes(currentUser.uid)) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { mutualVotes: arrayUnion(currentUser.uid) });
+                        await addDoc(messagesRef, { roomId: currentRoomId, senderId: 'system', type: 'system', text: 'MUTUAL_SUCCESS', timestamp: Date.now() });
+                    } else if (votes.length === 0) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { mutualVotes: arrayUnion(currentUser.uid) });
+                        await addDoc(messagesRef, { roomId: currentRoomId, senderId: currentUser.uid, type: 'system', text: 'MUTUAL_REQUEST', timestamp: Date.now() });
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function wipeRoomMessages(roomId) {
+            if (!roomId) return;
+            try {
+                const qSnap = await getDocs(query(messagesRef, where("roomId", "==", roomId)));
+                qSnap.forEach(d => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_messages', d.id)).catch(e=>{}));
+            } catch(e) {}
+        }
+
+        async function autoReportSession(isManualReport = false) {
+            if (hasReportedThisSession || !currentRoomId) return;
+            hasReportedThisSession = true; 
+            let pTgInfo = "Unknown", mTgInfo = `${tgUser.first_name} [ID:${tgUser.id}]`, transcript = "";
+            let mediaMessages = []; 
+
+            try {
+                const roomSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId));
+                if (roomSnap.exists()) { const data = roomSnap.data(); pTgInfo = (data.users[0] === partnerUid) ? data.tgInfo1 : data.tgInfo2; }
+                
+                const qSnap = await getDocs(query(messagesRef, where("roomId", "==", currentRoomId)));
+                let msgs = []; qSnap.forEach((d) => msgs.push(d.data()));
+                msgs.sort((a, b) => a.timestamp - b.timestamp);
+                
+                if (msgs.length === 0 && !isManualReport) return;
+                
+                msgs.forEach(m => { 
+                    if (m.type === 'gif_url') {
+                        transcript += `[${m.senderId === currentUser.uid ? "User 1" : "User 2"}]: 🎞️ [Sending GIF/Sticker]\n`;
+                        mediaMessages.push(m);
+                    } else if (m.type === 'sticker') {
+                        transcript += `[${m.senderId === currentUser.uid ? "User 1" : "User 2"}]: 💮 [Sending Sticker]\n`;
+                    } else if (m.type === 'system') {
+                        transcript += `[SYSTEM]: ${m.text}\n`;
+                    } else {
+                        transcript += `[${m.senderId === currentUser.uid ? "User 1" : "User 2"}]: ${m.text}\n`; 
+                    }
+                });
+            } catch(e) {}
+            
+            const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            if (transcript.length > 3500) transcript = transcript.substring(transcript.length - 3500) + "\n..[CUT]";
+            const rText = `${isManualReport ? "🚨 <b>MANUAL REPORT</b> 🚨" : "👁️ <b>CHAT LOG</b> 👁️"}\n\n<b>User 1:</b>\n${esc(mTgInfo)}\n<b>User 2:</b>\n${esc(pTgInfo)}\n\n<b>History:</b>\n<pre>${esc(transcript)}</pre>`;
+            
+            try { 
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { 
+                    method: 'POST', headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: rText, parse_mode: 'HTML' }) 
+                }); 
+            } catch (e) {}
+        }
+
+        async function stopChat(isGhostTimeout = false, requireConfirm = false) {
+            if (requireConfirm && !confirm("Delete this mutual permanently?")) return;
+            if (currentRoomId) {
+                if (!isGhostTimeout) await autoReportSession();
+                const roomIdToDelete = currentRoomId; 
+                try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { status: 'closed' }); } catch (e) {}
+                
+                if (isMutualRoom && requireConfirm) {
+                    wipeRoomMessages(roomIdToDelete);
+                }
+            }
+            if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+            handlePartnerLeft(isGhostTimeout ? "Connection failed. Please search again." : "Partner has left the chat.");
+        }
+
+        async function manualReportUser() {
+            if(!confirm("Report this user?")) return;
+            if (currentRoomId) { 
+                await autoReportSession(true); 
+                const roomIdToDelete = currentRoomId;
+                try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { status: 'closed' }); } catch (e) {} 
+                
+                wipeRoomMessages(roomIdToDelete);
+            }
+            if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+            handlePartnerLeft("User reported. Chat closed.");
+        }
+
+        function handlePartnerLeft(message) {
+            currentRoomId = null; isMutualRoom = false;
+            els.systemNotice.innerText = message; els.systemNotice.classList.remove('hidden'); els.headerSubtitle.innerHTML = `<span class="text-tg-hint">Offline</span>`;
+            els.chatInputArea.classList.add('hidden'); els.chatHeaderActions.classList.add('hidden'); els.postChatActions.classList.remove('hidden');
+        }
+
+        function cleanUpListeners() {
+            if (pingInterval) { clearInterval(pingInterval); pingInterval = null; }
+            if (unsubQueue) { unsubQueue(); unsubQueue = null; }
+            if (unsubRooms) { unsubRooms(); unsubRooms = null; }
+            if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+        }
+
+        window.goToMutualList = function() {
+            currentRoomId = null; 
+            if (unsubMessages) { unsubMessages(); unsubMessages = null; } 
+            switchView('mutual_list');
+        };
+
+        function listenToMessages() {
+            if (unsubMessages) unsubMessages();
+            unsubMessages = onSnapshot(messagesRef, (snapshot) => {
+                let allMsgs = []; snapshot.forEach(doc => allMsgs.push({ id: doc.id, ...doc.data() }));
+                let roomMsgs = allMsgs.filter(m => m.roomId === currentRoomId).sort((a, b) => a.timestamp - b.timestamp);
+                let msgsHTML = '';
+                roomMsgs.forEach(msg => {
+                    if (msg.type === 'system') {
+                        if (msg.text === 'MUTUAL_REQUEST') {
+                            const textToShow = msg.senderId === currentUser.uid ? "Waiting for partner to accept Mutual..." : "Partner invited you to be Mutuals! 👇";
+                            msgsHTML += `<div class="flex justify-center my-2"><span class="bg-pink-500/10 text-pink-600 border border-pink-500/20 text-[11px] px-4 py-1.5 rounded-xl shadow-sm text-center font-semibold max-w-[85%]">${textToShow}</span></div>`;
+                        } else if (msg.text === 'MUTUAL_SUCCESS') {
+                            msgsHTML += `<div class="flex flex-col items-center my-3 gap-2">
+                                <span class="bg-pink-100 border border-pink-300 text-pink-800 text-[11px] font-bold px-4 py-2 rounded-xl shadow-sm text-center max-w-[85%]">🎉 You are now Mutuals! Chat saved.</span>
+                                <button onclick="window.goToMutualList()" class="bg-pink-500 hover:bg-pink-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-sm transition-transform active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fas fa-list-ul"></i> View Mutuals List
+                                </button>
+                            </div>`;
+                        }
+                    } else {
+                        const isMe = msg.senderId === currentUser.uid;
+                        const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        
+                        let msgContent = '';
+                        let isStickerOrGif = msg.type === 'sticker' || msg.type === 'gif_url'; 
+
+                        if (msg.type === 'gif_url') {
+                            msgContent = `<img src="${msg.text}" class="max-w-[150px] w-auto h-auto rounded-lg object-contain drop-shadow-md pointer-events-none no-select">`;
+                        } else if (msg.type === 'sticker') {
+                            msgContent = `<img src="${msg.text}" class="w-24 h-24 object-contain drop-shadow-md pointer-events-none no-select">`;
+                        } else {
+                            msgContent = escapeHTML(msg.text);
+                        }
+
+                        let bubbleMe = isStickerOrGif ? 'bg-transparent' : 'bg-tg-btn text-tg-btnText px-4 py-2 rounded-2xl rounded-tr-sm shadow-sm border border-transparent';
+                        let bubblePartner = isStickerOrGif ? 'bg-transparent' : 'bg-tg-bg text-tg-text px-4 py-2 rounded-2xl rounded-tl-sm shadow-sm border border-tg-hint/20';
+
+                        if (isMe) msgsHTML += `<div class="flex justify-end mb-2"><div class="max-w-[80%]"><div class="${bubbleMe} break-words text-[15px]">${msgContent}</div><div class="text-[10px] text-tg-hint text-right mt-1 mr-1">${time}</div></div></div>`;
+                        else msgsHTML += `<div class="flex justify-start mb-2"><div class="max-w-[80%]"><div class="${bubblePartner} break-words text-[15px]">${msgContent}</div><div class="text-[10px] text-tg-hint text-left mt-1 ml-1">${time}</div></div></div>`;
+                    }
+                });
+                els.chatMessages.innerHTML = msgsHTML; scrollToBottom();
+                
+                if (isMutualRoom && currentRoomId) clearUnreadCount(currentRoomId);
+            });
+        }
+
+        els.chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); let text = els.msgInput.value.trim(); if (!text || !currentRoomId || !currentUser) return;
+            if (/(https?:\/\/[^\s]+)|(www\.[^\s]+)|(t\.me\/[^\s]+)|(wa\.me\/[^\s]+)|(\b[a-zA-Z0-9-]+\.[a-zA-Z]{2,7}\b)|(@\w+)/gi.test(text)) {
+                els.chatMessages.innerHTML += `<div class="flex justify-center my-2"><span class="bg-red-500/10 text-red-500 text-[11px] font-bold px-4 py-2 rounded-xl shadow-sm text-center border border-red-500/30">⚠️ Message Deleted: Links are prohibited.</span></div>`;
+                scrollToBottom(); els.msgInput.value = ''; els.msgInput.focus(); return; 
+            }
+            
+            els.msgInput.value = ''; els.msgInput.focus(); scrollToBottom();
+            
+            try { 
+                await addDoc(messagesRef, { roomId: currentRoomId, senderId: currentUser.uid, type: 'text', text: text, timestamp: Date.now() }); 
+                if (isMutualRoom && partnerUid) {
+                    try {
+                        const roomSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId));
+                        if (roomSnap.exists()) {
+                            let unread = roomSnap.data().unreadCount || {};
+                            unread[partnerUid] = (unread[partnerUid] || 0) + 1;
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tg_match_rooms', currentRoomId), { unreadCount: unread, lastUpdated: Date.now() });
+                        }
+                    } catch(e) {}
+                }
+            } catch (e) {}
+        });
+
+        // --- THE MISSING EVENT LISTENERS ARE RESTORED HERE ---
+        els.btnSearch.addEventListener('click', startSearch); 
+        els.btnCancel.addEventListener('click', cancelSearch); 
+        els.btnReport.addEventListener('click', manualReportUser);
+        els.btnStopBottom.addEventListener('click', () => stopChat(false, false)); 
+        els.btnMutual.addEventListener('click', voteMutual);
+        // -----------------------------------------------------
+
+        const handleBackNavigation = () => {
+            if (currentState === 'chatting') {
+                if (!currentRoomId) { 
+                    switchView('idle'); 
+                }
+                else if (isMutualRoom) { 
+                    currentRoomId = null; 
+                    if (unsubMessages) { unsubMessages(); unsubMessages = null; } 
+                    switchView('mutual_list'); 
+                } 
+                else { 
+                    if (confirm("End this random chat and leave?")) stopChat(false, false); 
+                }
+            }
+        };
+
+        tg.BackButton.onClick(handleBackNavigation);
+        els.btnBackHeader.addEventListener('click', handleBackNavigation);
+        
+        els.btnStopHeader.addEventListener('click', () => stopChat(false, true));
+        
+        els.btnSearchAgain.addEventListener('click', () => { switchView('idle'); setTimeout(startSearch, 300); });
+        
+        window.addEventListener('beforeunload', () => { 
+            if (currentState === 'searching' && myQueueDocId) cancelSearch(); 
+            else if (currentState === 'chatting' && !isMutualRoom) { autoReportSession(); stopChat(false, false); } 
+        });
+
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); }
+
+        function scrollToBottom() {
+            if (currentState === 'chatting' && els.chatMessages) {
+                requestAnimationFrame(() => els.chatMessages.scrollTop = els.chatMessages.scrollHeight);
+                setTimeout(() => els.chatMessages.scrollTop = els.chatMessages.scrollHeight, 100);
+            }
+        }
+        function adjustViewport() {
+            let vh = window.innerHeight; if (window.Telegram?.WebApp?.viewportHeight) vh = window.Telegram.WebApp.viewportHeight; else if (window.visualViewport) vh = window.visualViewport.height;
+            document.body.style.height = vh + 'px'; document.documentElement.style.height = vh + 'px'; window.scrollTo(0, 0); scrollToBottom();
+        }
+        tg.onEvent('viewportChanged', adjustViewport); if (window.visualViewport) window.visualViewport.addEventListener('resize', adjustViewport);
+        els.msgInput.addEventListener('focus', () => { 
+            els.stickerPicker.classList.add('hidden'); 
+            els.gifPicker.classList.add('hidden'); 
+            setTimeout(adjustViewport, 200); 
+            scrollToBottom(); 
+        }); els.msgInput.addEventListener('click', scrollToBottom);
+
+        adjustViewport(); initAuth();
+    </script>
+</body>
+</html>

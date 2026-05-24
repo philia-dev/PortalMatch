@@ -45,14 +45,13 @@ cd ~/portaldot/portaldot-testnet-ubuntu
 
 **Terminal 2 (Bob Node):**
 
-
+```
 ./portaldot_dev --dev --bob --name portal_bob \
 --base-path /tmp/bob \
 --port 30334 \
 --rpc-port 9945 \
 --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/<PASTE_ALICE_PEER_ID_HERE>
 
-```
 
 ### 2. Set Up the Project Frontend in VS Code
 
@@ -68,4 +67,3 @@ cd ~/portaldot/portaldot-testnet-ubuntu
 3. If a Windows Defender Firewall alert pops up, ensure you check both **Private** and **Public** networks, then click **Allow Access**.
 4. Your default web browser will automatically load the application at: `http://127.0.0.1:5500/index.html`
 
----

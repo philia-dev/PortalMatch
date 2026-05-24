@@ -52,7 +52,7 @@ cd ~/portaldot/portaldot-testnet-ubuntu
 --rpc-port 9945 \
 --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/<PASTE_ALICE_PEER_ID_HERE>
 
-
+```
 ### 2. Set Up the Project Frontend in VS Code
 
 1. Open **Visual Studio Code**.
@@ -66,4 +66,4 @@ cd ~/portaldot/portaldot-testnet-ubuntu
 2. **Right-click** anywhere inside the code editor screen and select **"Open with Live Server"**, OR simply click the blue **"Go Live"** button located on the bottom status bar of VS Code.
 3. If a Windows Defender Firewall alert pops up, ensure you check both **Private** and **Public** networks, then click **Allow Access**.
 4. Your default web browser will automatically load the application at: `http://127.0.0.1:5500/index.html`
-
+```

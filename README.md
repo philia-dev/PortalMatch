@@ -36,7 +36,6 @@ Ensure your local Ubuntu WSL2 or native Linux environment has the Portaldot test
 
 ```
 
-```bash
 cd ~/portaldot/portaldot-testnet-ubuntu
 ./portaldot_dev --dev --alice --name portal_alice --base-path /tmp/alice --rpc-cors all --unsafe-ws-external --unsafe-rpc-external
 
@@ -46,7 +45,7 @@ cd ~/portaldot/portaldot-testnet-ubuntu
 
 **Terminal 2 (Bob Node):**
 
-```bash
+
 ./portaldot_dev --dev --bob --name portal_bob \
 --base-path /tmp/bob \
 --port 30334 \

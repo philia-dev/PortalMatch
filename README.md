@@ -36,9 +36,6 @@ Ensure your local Ubuntu WSL2 or native Linux environment has the Portaldot test
 
 ```
 
-```text
-[file-tag: README.md]
-
 ```bash
 cd ~/portaldot/portaldot-testnet-ubuntu
 ./portaldot_dev --dev --alice --name portal_alice --base-path /tmp/alice --rpc-cors all --unsafe-ws-external --unsafe-rpc-external

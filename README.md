@@ -92,7 +92,7 @@ cd ~/portaldot/portaldot-testnet-ubuntu
 
 ---
 
-## 🎬 End-to-End Multi-User Demonstration Guide
+## 🎬 End-to-End Multi-User Demonstration
 
 To thoroughly demonstrate the multi-client network matching mechanics and verified POT fee deductions, perform the following testing sequence:
 

@@ -113,12 +113,9 @@ To allow the burner accounts to satisfy the Substrate network's Existential Depo
 ### 3. Execute Matchmaking and Off-Chain Signaling
 
 1. Return to the browser instances and refresh both windows (`F5`). The UI balance fields will immediately update to reflect the received POT balances.
-2. **Launch your screen recording framework.**
-3. On the **User 1** layout, input demographic preferences (Age/Gender) and select **Search Now (Gas: POT)**. The backend will trigger a signing prompt via the local seed state, broadcast the block mutation, and transition smoothly into the pulsing *Finding Match...* tracking layout.
-4. Shift immediately to the **User 2** window, align preferences, and select **Search Now (Gas: POT)**.
-5. **Success! 🎉** Within exactly one block finalized time, both transactions clear the Substrate ledger, POT fee deductions reflect instantly across both wallet balances, and the application switches to the secure 1-on-1 chatting panel.
-6. Type a quick confirmation message, send a rich sticker, or load a live animated item from the Giphy search box to show the active database routing stability.
-7. Stop your recording. Your final hackathon demo package is fully ready for submission!
+2. On the **User 1** layout, input demographic preferences (Age/Gender) and select **Search Now (Gas: POT)**. The backend will trigger a signing prompt via the local seed state, broadcast the block mutation, and transition smoothly into the pulsing *Finding Match...* tracking layout.
+3. Shift immediately to the **User 2** window, align preferences, and select **Search Now (Gas: POT)**.
+4. **Success! 🎉** Within exactly one block finalized time, both transactions clear the Substrate ledger, POT fee deductions reflect instantly across both wallet balances, and the application switches to the secure 1-on-1 chatting panel.
 
 **DEMO VIDEO:**
 ```

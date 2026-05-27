@@ -95,7 +95,7 @@ cd portaldot-hackathon-2026-PortalMatch-Philia
 
 ### Demo
 
-* **Live demo link:** https://drive.google.com/file/d/1B627gBaf60CqwuZVUS-Xak_gQu0IS2W6/view
+* **Video link:** https://drive.google.com/file/d/1B627gBaf60CqwuZVUS-Xak_gQu0IS2W6/view
 * **Test accounts / test data (Simulating 2 Users):**
 To test the end-to-end matchmaking flow and verify the on-chain fee deductions locally, follow this exact sequence to simulate two independent users:
 

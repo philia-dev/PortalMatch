@@ -108,8 +108,8 @@ To test the end-to-end matchmaking flow and verify the on-chain fee deductions l
 1. Open the [Polkadot.js Apps Explorer](https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9944#/accounts) connected to your local Portaldot node.
 2. Locate the default **ALICE** development account.
 3. Click **Send** next to ALICE's account.
-4. Copy **User 1's** generated wallet address from your browser UI, paste it as the "send to address" in Polkadot.js, set the amount to **1000 POT**, and click **Make Transfer > Sign and Submit**.
-5. Repeat the exact same process to send **1000 POT** to **User 2's** generated address.
+4. Copy **User 1's** generated wallet address from your browser UI, paste it as the "send to address" in Polkadot.js, set the amount to **1000 UNIT**, and click **Make Transfer > Sign and Submit**.
+5. Repeat the exact same process to send **1000 UNIT** to **User 2's** generated address.
 
 
 **C. Execute On-Chain Matchmaking & Off-Chain Chat**

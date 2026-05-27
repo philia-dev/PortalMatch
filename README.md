@@ -1,7 +1,11 @@
-# PortalDot Hackathon 2026 — PortalMatch
+<h1 align="center">PORTALDOT HACKATHON 2026 — PORTALMATCH</h1>
 
-### PortalMatch 
-![PortalMatch](https://i.ibb.co.com/RpmWy33R/resized-128x128.png)
+<p align="center">
+  <img src="https://i.ibb.co.com/RpmWy33R/resized-128x128.png" width="100"><br>
+  <b>PortalMatch</b><br>
+  On-Chain Matching. Off-Chain Privacy.
+</p>
+
 
 
 ## Project Overview

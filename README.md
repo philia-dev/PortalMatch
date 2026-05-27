@@ -1,6 +1,7 @@
 # PortalDot Hackathon 2026 — PortalMatch
 
-### PortalMatch
+### PortalMatch 
+![PortalMatch](https://i.ibb.co.com/RpmWy33R/resized-128x128.png)
 
 
 ## Project Overview
@@ -145,8 +146,10 @@ To test the end-to-end matchmaking flow and verify the on-chain fee deductions l
 
 ### License
 
-MIT License
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-```
+### Thanks to:
+
+![Portaldot Hackathon](https://i.ibb.co.com/xKWbKs4D/resized-90x19.png)
 
 ```

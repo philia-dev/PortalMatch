@@ -88,14 +88,14 @@ cd PortalMatch
 
 ### Roadmap
 
-* **Completed features:**
+**Completed features:**
 * Automated local Substrate wallet generation (`sr25519`).
 * Integration with `@polkadot/api` for live balance fetching and transaction signing.
 * On-chain sybil-resistance execution (0.05 POT deduction).
 * P2P matchmaking and secure off-chain chat routing.
 
 
-* **Next phase plans:**
+**Next phase plans:**
 * **Gas Cashback (Zero-Fee Matching):** Implementing "Happy Hours" where users who match and actively chat receive a 100% refund on their matchmaking gas fee to combat cold-start hell.
 * **"Jackpot Match" (Gacha Element):** 5-10% chance during Happy Hour for matched users to win an automated 1 POT airdrop to bootstrap viral liquidity.
 * **Telegram Referral Integration:** Seamless invite system utilizing Telegram's native sharing components.

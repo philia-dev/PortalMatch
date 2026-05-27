@@ -117,9 +117,9 @@ To allow the burner accounts to satisfy the Substrate network's Existential Depo
 3. Shift immediately to the **User 2** window, align preferences, and select **Search Now (Gas: POT)**.
 4. **Success! 🎉** Within exactly one block finalized time, both transactions clear the Substrate ledger, POT fee deductions reflect instantly across both wallet balances, and the application switches to the secure 1-on-1 chatting panel.
 
-**DEMO VIDEO:**
+**DEMO VIDEO LINK:**
 ```
 
- https://drive.google.com/file/d/1koNE6scC7BUOpGurtVI6ekojs884TPnh/view
+ https://drive.google.com/file/d/1B627gBaf60CqwuZVUS-Xak_gQu0IS2W6/view
 
 ```

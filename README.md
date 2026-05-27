@@ -31,7 +31,7 @@
 
 ```
 
-* **Core tech stack:**
+**Core tech stack:**
 * **Blockchain platform:** Portaldot Appchain (Local Node / Substrate Framework)
 * **Smart contract language:** N/A (Utilizes Native Substrate Pallets instead of WASM/ink! for maximum efficiency)
 * **Frontend framework:** HTML5, Vanilla JS, TailwindCSS
